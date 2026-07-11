@@ -32,6 +32,11 @@ export default function DashboardLayout({ children }) {
     router.push('/')
   }
 
+  const isActive = (href) => {
+    const base = href.split('?')[0]
+    return pathname === base
+  }
+
   const navItems = [
     { href: '/dashboard', label: 'Overview', roles: ['supporter', 'creator', 'admin'] },
     { href: '/campaigns', label: 'Campaigns', roles: ['supporter', 'creator', 'admin'] },
@@ -40,8 +45,9 @@ export default function DashboardLayout({ children }) {
   ]
 
   const adminItems = [
-    { href: '/dashboard/admin', label: 'Campaign Approvals', roles: ['admin'] },
-    { href: '/dashboard/admin', label: 'Withdrawals', roles: ['admin'] },
+    { href: '/dashboard/admin?tab=campaigns', label: 'Campaign Approvals', roles: ['admin'] },
+    { href: '/dashboard/admin?tab=users', label: 'Users', roles: ['admin'] },
+    { href: '/dashboard/admin?tab=withdrawals', label: 'Withdrawals', roles: ['admin'] },
   ]
 
   const creatorItems = [
@@ -64,9 +70,9 @@ export default function DashboardLayout({ children }) {
             .filter(item => item.roles.includes(role))
             .map(item => (
               <Link
-                key={item.href + item.label}
+                key={item.href}
                 href={item.href}
-                className={pathname === item.href ? 'active' : ''}
+                className={isActive(item.href) ? 'active' : ''}
               >
                 {item.label}
               </Link>

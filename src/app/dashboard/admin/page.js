@@ -5,6 +5,12 @@ import { useRouter } from 'next/navigation'
 import DashboardLayout from '@/components/DashboardLayout'
 import { api, getUser } from '@/utils/api'
 
+const STATUS_COLORS = {
+  pending: '#f0ad4e',
+  approved: '#5cb85c',
+  rejected: '#d9534f'
+}
+
 export default function AdminDashboard() {
   const router = useRouter()
   const [user, setUser] = useState(null)
@@ -12,9 +18,11 @@ export default function AdminDashboard() {
   const [campaigns, setCampaigns] = useState([])
   const [users, setUsers] = useState([])
   const [withdrawals, setWithdrawals] = useState([])
+  const [campFilter, setCampFilter] = useState('pending')
   const [campLoading, setCampLoading] = useState(true)
   const [userLoading, setUserLoading] = useState(true)
   const [withLoading, setWithLoading] = useState(true)
+  const [msg, setMsg] = useState('')
 
   useEffect(() => {
     const u = getUser()
@@ -23,76 +31,137 @@ export default function AdminDashboard() {
   }, [router])
 
   useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const t = params.get('tab')
+    if (t) setTab(t)
+  }, [])
+
+  useEffect(() => {
     if (!user || tab !== 'campaigns') return
     setCampLoading(true)
-    api.get('/campaigns').then(d => setCampaigns(d.campaigns)).catch(() => setCampaigns([])).finally(() => setCampLoading(false))
+    api.get('/campaigns')
+      .then(d => setCampaigns(d.campaigns))
+      .catch(() => setCampaigns([]))
+      .finally(() => setCampLoading(false))
   }, [user, tab])
 
   useEffect(() => {
     if (!user || tab !== 'users') return
     setUserLoading(true)
-    api.get('/users').then(d => setUsers(d.users)).catch(() => setUsers([])).finally(() => setUserLoading(false))
+    api.get('/users')
+      .then(d => setUsers(d.users))
+      .catch(() => setUsers([]))
+      .finally(() => setUserLoading(false))
   }, [user, tab])
 
   useEffect(() => {
     if (!user || tab !== 'withdrawals') return
     setWithLoading(true)
-    api.get('/credits/withdrawals').then(d => setWithdrawals(d.withdrawals)).catch(() => setWithdrawals([])).finally(() => setWithLoading(false))
+    api.get('/credits/withdrawals')
+      .then(d => setWithdrawals(d.withdrawals))
+      .catch(() => setWithdrawals([]))
+      .finally(() => setWithLoading(false))
   }, [user, tab])
 
+  const switchTab = (t) => {
+    setTab(t)
+    router.push(`/dashboard/admin?tab=${t}`)
+  }
+
+  const showMsg = (text, isError = false) => {
+    setMsg({ text, isError })
+    setTimeout(() => setMsg(''), 3000)
+  }
+
   const handleCampaignStatus = async (id, status) => {
+    if (!confirm(`Are you sure you want to ${status} this campaign?`)) return
     try {
       await api.patch(`/campaigns/${id}/status`, { status })
       setCampaigns(prev => prev.map(c => c._id === id ? { ...c, status } : c))
+      showMsg(`Campaign ${status} successfully`)
     } catch (err) {
-      alert(err.message)
+      showMsg(err.message, true)
     }
   }
 
   const handleUserRole = async (id, role) => {
+    if (!confirm(`Change this user's role to ${role}?`)) return
     try {
       await api.patch(`/users/${id}/role`, { role })
       setUsers(prev => prev.map(u => u._id === id ? { ...u, role } : u))
+      showMsg(`User role changed to ${role}`)
     } catch (err) {
-      alert(err.message)
+      showMsg(err.message, true)
     }
   }
 
   const handleWithdrawal = async (id, status) => {
+    const action = status === 'approved' ? 'Approve' : 'Reject'
+    if (!confirm(`${action} this withdrawal?`)) return
     try {
       await api.patch(`/credits/withdrawals/${id}`, { status })
       setWithdrawals(prev => prev.map(w => w._id === id ? { ...w, status } : w))
+      showMsg(`Withdrawal ${status}`)
     } catch (err) {
-      alert(err.message)
+      showMsg(err.message, true)
     }
   }
 
   if (!user) return null
 
+  const filteredCampaigns = campFilter
+    ? campaigns.filter(c => c.status === campFilter)
+    : campaigns
+
   return (
     <DashboardLayout>
       <h1>Admin Panel</h1>
 
+      {msg && (
+        <p style={{
+          padding: '0.75rem', borderRadius: 6, marginBottom: '1rem',
+          background: msg.isError ? '#fce4ec' : '#e8f5e9',
+          color: msg.isError ? '#c62828' : '#2e7d32'
+        }}>{msg.text}</p>
+      )}
+
       <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem', borderBottom: '2px solid #ddd', paddingBottom: '0.5rem' }}>
-        {['campaigns', 'users', 'withdrawals'].map(t => (
+        {[
+          { key: 'campaigns', label: 'Campaigns' },
+          { key: 'users', label: 'Users' },
+          { key: 'withdrawals', label: 'Withdrawals' },
+          { key: 'reports', label: 'Reports' }
+        ].map(t => (
           <button
-            key={t}
-            onClick={() => setTab(t)}
+            key={t.key}
+            onClick={() => switchTab(t.key)}
             style={{
-              padding: '0.5rem 1.25rem', background: tab === t ? '#1a1a2e' : '#f5f5f5',
-              color: tab === t ? '#fff' : '#333', border: 'none', borderRadius: 4,
-              cursor: 'pointer', textTransform: 'capitalize'
+              padding: '0.5rem 1.25rem', background: tab === t.key ? '#1a1a2e' : '#f5f5f5',
+              color: tab === t.key ? '#fff' : '#333', border: 'none', borderRadius: 4,
+              cursor: 'pointer'
             }}
           >
-            {t === 'withdrawals' ? 'Withdrawals' : t}
+            {t.label}
           </button>
         ))}
       </div>
 
       {tab === 'campaigns' && (
         <>
-          <h2 style={{ fontSize: '1.1rem', marginBottom: '0.75rem' }}>Campaign Approvals</h2>
-          {campLoading ? <p>Loading...</p> : campaigns.length === 0 ? <p style={{ color: '#666' }}>No campaigns.</p> : (
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+            <h2 style={{ fontSize: '1.1rem' }}>Campaign Approvals</h2>
+            <select
+              value={campFilter}
+              onChange={(e) => setCampFilter(e.target.value)}
+              style={{ padding: '0.35rem', fontSize: '0.85rem' }}
+            >
+              <option value="">All statuses</option>
+              <option value="pending">Pending</option>
+              <option value="approved">Approved</option>
+              <option value="rejected">Rejected</option>
+            </select>
+          </div>
+          {campLoading ? <p>Loading...</p> : filteredCampaigns.length === 0 ? <p style={{ color: '#666' }}>No campaigns match this filter.</p> : (
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead>
                 <tr style={{ background: '#f5f5f5', textAlign: 'left' }}>
@@ -104,14 +173,14 @@ export default function AdminDashboard() {
                 </tr>
               </thead>
               <tbody>
-                {campaigns.map(c => (
+                {filteredCampaigns.map(c => (
                   <tr key={c._id} style={{ borderBottom: '1px solid #eee' }}>
                     <td style={tdStyle}>{c.title}</td>
                     <td style={tdStyle}>{c.creator?.name || 'Unknown'}</td>
                     <td style={tdStyle}>{c.goal}</td>
                     <td style={tdStyle}>
                       <span style={{
-                        background: c.status === 'approved' ? '#5cb85c' : c.status === 'rejected' ? '#d9534f' : '#f0ad4e',
+                        background: STATUS_COLORS[c.status],
                         color: '#fff', padding: '2px 8px', borderRadius: 4, fontSize: '0.75rem'
                       }}>{c.status}</span>
                     </td>
@@ -152,7 +221,12 @@ export default function AdminDashboard() {
                   <tr key={u._id} style={{ borderBottom: '1px solid #eee' }}>
                     <td style={tdStyle}>{u.name}</td>
                     <td style={tdStyle}>{u.email}</td>
-                    <td style={tdStyle}>{u.role}</td>
+                    <td style={tdStyle}>
+                      <span style={{
+                        background: u.role === 'admin' ? '#5cb85c' : u.role === 'creator' ? '#f0ad4e' : '#d9534f',
+                        color: '#fff', padding: '2px 8px', borderRadius: 4, fontSize: '0.75rem'
+                      }}>{u.role}</span>
+                    </td>
                     <td style={tdStyle}>{u.credits}</td>
                     <td style={tdStyle}>
                       <select
@@ -195,7 +269,7 @@ export default function AdminDashboard() {
                     <td style={tdStyle}>${w.amount}</td>
                     <td style={tdStyle}>
                       <span style={{
-                        background: w.status === 'approved' ? '#5cb85c' : w.status === 'rejected' ? '#d9534f' : '#f0ad4e',
+                        background: STATUS_COLORS[w.status],
                         color: '#fff', padding: '2px 8px', borderRadius: 4, fontSize: '0.75rem'
                       }}>{w.status}</span>
                     </td>
@@ -214,6 +288,13 @@ export default function AdminDashboard() {
               </tbody>
             </table>
           )}
+        </>
+      )}
+
+      {tab === 'reports' && (
+        <>
+          <h2 style={{ fontSize: '1.1rem', marginBottom: '0.75rem' }}>Reports</h2>
+          <p style={{ color: '#666' }}>Reports feature coming soon.</p>
         </>
       )}
     </DashboardLayout>
