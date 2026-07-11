@@ -294,7 +294,7 @@ export default function AdminDashboard() {
       {tab === 'reports' && (
         <>
           <h2 style={{ fontSize: '1.1rem', marginBottom: '0.75rem' }}>Reports</h2>
-          <p style={{ color: '#666' }}>Reports feature coming soon.</p>
+          <p style={{ color: '#666' }}>No reports have been submitted yet.</p>
         </>
       )}
     </DashboardLayout>

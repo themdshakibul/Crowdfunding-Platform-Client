@@ -21,6 +21,8 @@ nav {
   padding: 1rem 2rem;
   background: #1a1a2e;
   color: #fff;
+  flex-wrap: wrap;
+  gap: 0.5rem;
 }
 
 nav a, nav button {
@@ -84,4 +86,147 @@ aside button {
 
 aside + main {
   margin-left: 260px;
+}
+
+@media (max-width: 768px) {
+  nav {
+    padding: 0.75rem 1rem;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  nav > div {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+    width: 100%;
+  }
+
+  nav a, nav button {
+    margin-left: 0;
+    font-size: 0.9rem;
+  }
+
+  main {
+    padding: 1rem;
+  }
+
+  aside {
+    width: 200px;
+    padding: 1rem;
+  }
+
+  aside h2 { font-size: 1rem; }
+
+  aside + main {
+    margin-left: 200px;
+  }
+
+  table {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+}
+
+@media (max-width: 480px) {
+  nav {
+    padding: 0.5rem 0.75rem;
+  }
+
+  nav > div {
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  main {
+    padding: 0.75rem;
+  }
+
+  aside {
+    width: 100%;
+    min-height: auto;
+    position: relative;
+    padding: 0.75rem;
+  }
+
+  aside h2 { margin-bottom: 0.75rem; }
+  aside nav { flex-direction: row; flex-wrap: wrap; gap: 0.5rem; }
+  aside nav a { width: auto; border: none; padding: 0.25rem 0.5rem; }
+  aside button { margin-top: 1rem; font-size: 0.85rem; }
+
+  aside + main {
+    margin-left: 0;
+  }
+
+  footer {
+    padding: 0.75rem;
+    font-size: 0.85rem;
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(40px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.8s ease-out forwards;
+}
+
+.animate-slide-up {
+  animation: slideUp 0.6s ease-out forwards;
+}
+
+.animate-pulse {
+  animation: pulse 2s ease-in-out infinite;
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+.animate-delay-1 { animation-delay: 0.2s; opacity: 0; }
+.animate-delay-2 { animation-delay: 0.4s; opacity: 0; }
+.animate-delay-3 { animation-delay: 0.6s; opacity: 0; }
+
+.hero-cta {
+  display: inline-block;
+  padding: 0.75rem 2rem;
+  background: #e94560;
+  color: #fff;
+  border-radius: 6px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  transition: background 0.3s, transform 0.2s;
+}
+
+.hero-cta:hover {
+  background: #d63851;
+  animation: pulse 1s ease-in-out infinite;
+}
+
+.hero-cta.secondary {
+  background: transparent;
+  border: 2px solid #fff;
+}
+
+.hero-cta.secondary:hover {
+  background: rgba(255,255,255,0.1);
 }
