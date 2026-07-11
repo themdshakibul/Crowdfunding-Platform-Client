@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import BasicLayout from '@/components/BasicLayout'
-import { api, getToken, getUser } from '@/utils/api'
+import { api, getToken, getUser, refreshUser, updateCredits } from '@/utils/api'
 
 export default function CampaignDetailPage() {
   const { id } = useParams()
@@ -31,7 +31,7 @@ export default function CampaignDetailPage() {
         return data.campaign
       })
       .then(c => {
-        if (user?.role === 'creator' && c.creator?._id === user?.id) {
+        if (user?.role === 'creator' && c.creator?._id === user?._id) {
           api.get(`/contributions/campaign/${id}`)
             .then(d => setContributions(d.contributions))
             .catch(() => {})
@@ -50,6 +50,8 @@ export default function CampaignDetailPage() {
     setContributeLoading(true)
     try {
       const data = await api.post('/contributions', { campaignId: id, amount: parseInt(amount) })
+      updateCredits(data.credits)
+      setUser(prev => ({ ...prev, credits: data.credits }))
       setContributeMsg(`Contributed ${amount} credits successfully! Remaining: ${data.credits} credits`)
       setAmount('')
     } catch (err) {
@@ -62,7 +64,7 @@ export default function CampaignDetailPage() {
   if (loading) return <BasicLayout><p>Loading...</p></BasicLayout>
   if (!campaign) return null
 
-  const isOwner = user?.role === 'creator' && campaign.creator?._id === user.id
+  const isOwner = user?.role === 'creator' && campaign.creator?._id === user._id
   const isSupporter = user?.role === 'supporter'
   const isAdmin = user?.role === 'admin'
 

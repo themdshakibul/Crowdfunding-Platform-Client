@@ -58,3 +58,21 @@ export function clearAuth() {
   removeToken()
   removeUser()
 }
+
+export async function refreshUser() {
+  try {
+    const data = await api.get('/auth/me')
+    setUser(data.user)
+    return data.user
+  } catch {
+    return null
+  }
+}
+
+export function updateCredits(credits) {
+  const user = getUser()
+  if (user) {
+    user.credits = credits
+    setUser(user)
+  }
+}

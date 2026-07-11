@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import DashboardLayout from '@/components/DashboardLayout'
-import { api, getUser } from '@/utils/api'
+import { api, getUser, refreshUser } from '@/utils/api'
 
 const STATUS_COLORS = {
   pending: '#f0ad4e',
@@ -17,25 +17,29 @@ export default function SupporterDashboard() {
   const [contributions, setContributions] = useState([])
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
+  const [statusFilter, setStatusFilter] = useState('')
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     const u = getUser()
     if (!u) return router.replace('/auth/login')
     setUser(u)
+    refreshUser().then(setUser)
   }, [router])
 
   useEffect(() => {
     if (!user) return
     setLoading(true)
-    api.get(`/contributions/mine?page=${page}&limit=10`)
+    const query = new URLSearchParams({ page, limit: '10' })
+    if (statusFilter) query.set('status', statusFilter)
+    api.get(`/contributions/mine?${query}`)
       .then(data => {
         setContributions(data.contributions)
         setTotalPages(data.totalPages)
       })
       .catch(() => setContributions([]))
       .finally(() => setLoading(false))
-  }, [user, page])
+  }, [user, page, statusFilter])
 
   if (!user) return null
 
@@ -48,10 +52,24 @@ export default function SupporterDashboard() {
         </div>
       </div>
 
+      <div style={{ marginBottom: '1rem', display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+        <label style={{ fontSize: '0.9rem' }}>Filter by status:</label>
+        <select
+          value={statusFilter}
+          onChange={(e) => { setStatusFilter(e.target.value); setPage(1) }}
+          style={{ padding: '0.4rem', fontSize: '0.9rem' }}
+        >
+          <option value="">All</option>
+          <option value="pending">Pending</option>
+          <option value="approved">Approved</option>
+          <option value="rejected">Rejected</option>
+        </select>
+      </div>
+
       {loading ? (
         <p>Loading...</p>
       ) : contributions.length === 0 ? (
-        <p style={{ color: '#666' }}>No contributions yet. <a href="/campaigns" style={{ color: '#1a1a2e' }}>Browse campaigns</a></p>
+        <p style={{ color: '#666' }}>No contributions found. <a href="/campaigns" style={{ color: '#1a1a2e' }}>Browse campaigns</a></p>
       ) : (
         <>
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
@@ -82,7 +100,7 @@ export default function SupporterDashboard() {
             </tbody>
           </table>
 
-          <div style={{ marginTop: '1rem', display: 'flex', gap: '0.5rem', justifyContent: 'center' }}>
+          <div style={{ marginTop: '1rem', display: 'flex', gap: '0.5rem', justifyContent: 'center', alignItems: 'center' }}>
             <button disabled={page <= 1} onClick={() => setPage(p => p - 1)} style={btnStyle}>Previous</button>
             <span style={{ padding: '0.5rem' }}>Page {page} of {totalPages}</span>
             <button disabled={page >= totalPages} onClick={() => setPage(p => p + 1)} style={btnStyle}>Next</button>
