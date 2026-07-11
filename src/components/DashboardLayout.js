@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { useRouter, usePathname } from 'next/navigation'
 import { clearAuth, getToken, getUser } from '@/utils/api'
 import { useEffect, useState } from 'react'
+import NotificationBell from './NotificationBell'
 
 export default function DashboardLayout({ children }) {
   const router = useRouter()
@@ -39,7 +40,7 @@ export default function DashboardLayout({ children }) {
   ]
 
   const adminItems = [
-    { href: '/dashboard/admin', label: 'Manage Campaigns', roles: ['admin'] },
+    { href: '/dashboard/admin', label: 'Campaign Approvals', roles: ['admin'] },
     { href: '/dashboard/admin', label: 'Withdrawals', roles: ['admin'] },
   ]
 
@@ -63,7 +64,7 @@ export default function DashboardLayout({ children }) {
             .filter(item => item.roles.includes(role))
             .map(item => (
               <Link
-                key={item.href}
+                key={item.href + item.label}
                 href={item.href}
                 className={pathname === item.href ? 'active' : ''}
               >
@@ -71,6 +72,9 @@ export default function DashboardLayout({ children }) {
               </Link>
             ))}
         </nav>
+        <div style={{ marginTop: 'auto', paddingTop: '1rem' }}>
+          <NotificationBell />
+        </div>
         <button onClick={handleLogout}>Logout</button>
       </aside>
       <main>{children}</main>

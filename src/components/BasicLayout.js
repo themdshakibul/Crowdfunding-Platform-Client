@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { getToken, clearAuth, getUser } from '@/utils/api'
 import { useEffect, useState } from 'react'
+import NotificationBell from './NotificationBell'
 
 export default function BasicLayout({ children }) {
   const router = useRouter()
@@ -32,6 +33,7 @@ export default function BasicLayout({ children }) {
             <>
               <span>{user.name}</span>
               <Link href="/dashboard">Dashboard</Link>
+              <NotificationBell />
               <button onClick={handleLogout}>Logout</button>
             </>
           ) : (
