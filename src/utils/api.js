@@ -37,3 +37,24 @@ export function getToken() {
 export function removeToken() {
   localStorage.removeItem('token')
 }
+
+export function setUser(user) {
+  localStorage.setItem('user', JSON.stringify(user))
+}
+
+export function getUser() {
+  try {
+    return JSON.parse(localStorage.getItem('user'))
+  } catch {
+    return null
+  }
+}
+
+export function removeUser() {
+  localStorage.removeItem('user')
+}
+
+export function clearAuth() {
+  removeToken()
+  removeUser()
+}

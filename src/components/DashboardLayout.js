@@ -2,13 +2,14 @@
 
 import Link from 'next/link'
 import { useRouter, usePathname } from 'next/navigation'
-import { removeToken, getToken } from '@/utils/api'
+import { clearAuth, getToken, getUser } from '@/utils/api'
 import { useEffect, useState } from 'react'
 
 export default function DashboardLayout({ children }) {
   const router = useRouter()
   const pathname = usePathname()
   const [role, setRole] = useState(null)
+  const [user, setUser] = useState(null)
 
   useEffect(() => {
     const token = getToken()
@@ -16,16 +17,17 @@ export default function DashboardLayout({ children }) {
       router.replace('/auth/login')
       return
     }
-    try {
-      const payload = JSON.parse(atob(token.split('.')[1]))
-      setRole(payload.role)
-    } catch {
+    const u = getUser()
+    if (u) {
+      setUser(u)
+      setRole(u.role)
+    } else {
       router.replace('/auth/login')
     }
   }, [router])
 
   const handleLogout = () => {
-    removeToken()
+    clearAuth()
     router.push('/')
   }
 
@@ -55,6 +57,7 @@ export default function DashboardLayout({ children }) {
     <div>
       <aside>
         <h2>Dashboard</h2>
+        {user && <p style={{ marginBottom: '1rem', fontSize: '0.9rem', opacity: 0.8 }}>{user.name}</p>}
         <nav>
           {allItems
             .filter(item => item.roles.includes(role))

@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { getToken, removeToken } from '@/utils/api'
+import { getToken, clearAuth, getUser } from '@/utils/api'
 import { useEffect, useState } from 'react'
 
 export default function BasicLayout({ children }) {
@@ -12,17 +12,12 @@ export default function BasicLayout({ children }) {
   useEffect(() => {
     const token = getToken()
     if (token) {
-      try {
-        const payload = JSON.parse(atob(token.split('.')[1]))
-        setUser(payload)
-      } catch {
-        setUser(null)
-      }
+      setUser(getUser())
     }
   }, [])
 
   const handleLogout = () => {
-    removeToken()
+    clearAuth()
     setUser(null)
     router.push('/')
   }
@@ -35,6 +30,7 @@ export default function BasicLayout({ children }) {
           <Link href="/campaigns">Campaigns</Link>
           {user ? (
             <>
+              <span>{user.name}</span>
               <Link href="/dashboard">Dashboard</Link>
               <button onClick={handleLogout}>Logout</button>
             </>
